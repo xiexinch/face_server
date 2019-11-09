@@ -15,8 +15,9 @@ app.use(express.static('public'))
 let config = {}
 fs.readFile('config.json', 'utf8',function(err, data) {
     if (err) throw err
-    let config = JSON.parse(data)
-    setConfig(config)
+    config = JSON.parse(data)
+    //setConfig(config)
+    console.log(config)
 })
 
 const FACE_SEARCH_URL = config['face_search_url']
@@ -28,7 +29,7 @@ const IMAGE_TYPE = config['image_type']
 const GROUP_ID = config['group_id']
 
 // database
-let db = require('./db')
+//let db = require('./db')
 
 app.get('/test', function() {
     let img = fs.readFileSync(IMG_PATH)
@@ -52,20 +53,32 @@ app.post('/search_face', upload.single('image'), function(req, res) {
     let imgData = req.body.image
     let base64Data = imgData.toString().replace(/^data:image\/\w+;base64,/, "");
 
-    axios.post(FACE_SEARCH_URL + TOKEN, {
+    console.log(config['face_search_url'])
+    console.log(config['token'])
+    axios.post(config['face_search_url'] + config['token'], {
         "image": base64Data,
-        "image_type": IMAGE_TYPE,
-        "group_id_list": GROUP_ID
+        "image_type": config['image_type'],
+        "group_id_list": config['group_id'],
+        "max_face_num": 5
     }).then(function(response) {
-
-        res.send(response.data)
-        db.connect(err => {
-            // TODO
-
-
-            db.close()
-        })
-
+        console.log(response.data)
+        if (response.data.error_code == 0) {
+            //let resdata = {}
+            console.log('success')
+            let face_list = response.data.result.face_list
+            // face_list.forEach(face => {
+            //     if (typeof(face) != "undefined") {
+            //         face.user_list.forEach(user => {
+            //             console.log(user)
+            //         })
+            //     } 
+            // })
+            res.json(face_list)
+        } else {
+            console.log("fail")
+            res.send(response.data.error_msg)
+        }
+        
     }).catch(function(error) {
         res.json(error)
         console.log(error)
@@ -86,17 +99,12 @@ app.post('/addFace', upload.single('new_face'), function(req, res) {
 
     axios.post(FACE_ADD_URL + TOKEN, {
         'image': base64Data,
-        'image_type': IMAGE_TYPE,
-        'group_id': GROUP_ID,
+        'image_type': config['image_type'],
+        'group_id': config['group_id'],
         'user_id': user_id
     }).then(function(response) {
         let returnData = ''
-        db.connect(err => {
-            // TODO
 
-
-            db.close()
-        })
         
         res.send(returnData)
 
@@ -110,7 +118,7 @@ app.post('/addFace', upload.single('new_face'), function(req, res) {
 
 let server = http.createServer(app)
 server.listen(8000, function() {
-    db.testConncet()
+    //db.testConncet()
     console.log('start at 8000')
 })
 

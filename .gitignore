@@ -22,6 +22,8 @@ lib-cov
 coverage
 *.lcov
 
+face_request.code-workspace
+
 # nyc test coverage
 .nyc_output
 
@@ -109,3 +111,4 @@ config.json
 baidutoken.json
 initMongodb.js
 token.bash
+test2.js
